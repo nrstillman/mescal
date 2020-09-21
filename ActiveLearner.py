@@ -7,7 +7,7 @@ import numpy as np
 
 class ActiveLearner:
 
-    def __init__(self,data, parameters, sample, costs = False, a = 1):
+    def __init__(self,data, parameters, sample, costs = False, a = 1, queryMethod='leastCertain'):
         
         self.data = data
         self.model = RandomForestClassifier(n_estimators=200, max_features=5)
@@ -15,6 +15,7 @@ class ActiveLearner:
         self.threshold = parameters[1]
         self.n_samples = parameters[2]
 
+        self.queryMethod = queryMethod
         self.samples = sample
 
         self.costs = costs    
@@ -31,10 +32,10 @@ class ActiveLearner:
 
         return score, rank
 
-    def rankData(self, test, queryMethod = 'leastCertain', costs=False):
+    def rankData(self, test, costs=False):
 
         # Calculate certainty - here we use sklearn's inbuilt prediction function
-        rank = []
+        certainty = []
         pred = self.model.predict(test[0])
         pred_prob = self.model.predict_proba(test[0])
 
@@ -42,12 +43,16 @@ class ActiveLearner:
             certainty.append(pred_prob[i][idx])
 
         # Return ranking based on query method
-        if queryMethod == 'leastCertain':
+        if self.queryMethod == 'leastCertain':
             return np.argsort(certainty)
-        elif queryMethod == 'margin':
-            return np.argsort(abs(y_pred_prob[:,0] - y_pred_prob[:,1]))
-        elif queryMethod == 'entropy':
-            return np.argsort((y_pred_prob*np.ma.log(y_pred_prob).filled(0)).sum(1))
+        elif self.queryMethod == 'margin':
+            return np.argsort(abs(pred_prob[:,0] - pred_prob[:,1]))
+        elif self.queryMethod == 'entropy':
+            return np.argsort((pred_prob*np.ma.log(pred_prob).filled(0)).sum(1))
+        elif self.queryMethod == False:    
+            a = np.arange(len(certainty))
+            np.random.shuffle(a)
+            return a
 
     def chooseTestData(self, rank=False):
         # Create list of indexes of available test data to keep track of what data has been sampled

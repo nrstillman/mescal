@@ -41,14 +41,17 @@ transformed_brest_cancer = pca.fit_transform(X=data[0])
 x_component, y_component = transformed_brest_cancer[:, 0], transformed_brest_cancer[:, 1]
 
 ### ------------- Active Learner:
-learner = AL.ActiveLearner(data, p, initial_sample) 
+learner = AL.ActiveLearner(data, p, initial_sample)#, queryMethod='entropy')  
 score0 = learner.Learn()
 
-benchmarkLearner = AL.ActiveLearner(data, [iterations, 2, n_samples], initial_sample) 
+benchmarkLearner = AL.ActiveLearner(data, [iterations, 2, n_samples], initial_sample, queryMethod=False) 
 score1 = benchmarkLearner.Learn()
 
-# annotate for meeting tomorrow
-# fig, ax = plt.subplots(figsize=(8.5, 6), dpi=130)
-# plt.plot(score0)
-# plt.plot(score1)
-# plt.show()
+#check learning ability
+fig, ax = plt.subplots(figsize=(8.5, 6), dpi=130)
+plt.plot(score0[0], label='Active Learner')
+plt.plot(score1[0], label='Random sampling')
+ax.set_xlabel('Number of iterations')
+ax.set_ylabel('Accuracy')
+plt.legend()
+plt.show()
