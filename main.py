@@ -22,10 +22,9 @@ data = loadData(df)
 pct_of_data = 0.05 
 init_n = int(len(data[0])*pct_of_data) 
 n_samples = 2
-certainty_threshold =0.8
 iterations = 50
 initial_sample = np.random.choice(np.arange(len(data[0])), init_n)
-p = [iterations, certainty_threshold, n_samples]
+p = [iterations, n_samples]
 
 ### ------------- Prepare data for fitting
 # Dim reduce for cleaner fit
