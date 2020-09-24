@@ -2,23 +2,26 @@ from sklearn.metrics import hamming_loss
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 
+import sklearn.gaussian_process as gp
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 class ActiveLearner:
 
-    def __init__(self,simulator, parameters, seed, costs = False, queryMethod='leastCertain'):
+    def __init__(self,simulator, parameters, seed, costs = False, queryMethod='leastCertain', unknownCosts = False, epsf = 0, epsg = 0):
         
         self.data = simulator
         self.model = RandomForestClassifier(n_estimators=200, max_features=5)
         self.iterations = parameters[0]
         self.n_samples = parameters[1]
-
+        # Option initialisation for learner
         self.queryMethod = queryMethod
         self.samples = seed
-
         self.costs = costs    
-
+        self.unknownCosts = unknownCosts 
+        self.epsf = epsf
+        self.epsg = epsg
         # Create list of indexes of available test data to keep track of what data has been sampled
         self.test_idx = np.arange(len(self.data[0]))
 
@@ -29,7 +32,6 @@ class ActiveLearner:
         score, pred, rank = self.fitModel(train, test)
 
         print('\nInitial Score:  {}'.format(score))
-        # self.rankData(test)
 
         return score, rank
 
@@ -40,9 +42,14 @@ class ActiveLearner:
         pred = self.model.predict(test[0])
         pred_prob = self.model.predict_proba(test[0])
 
-        costs = self.costs[np.delete(self.test_idx, self.samples, 0)] if self.costs is not False else 1
         for i, idx in enumerate(pred):
             certainty.append(pred_prob[i][idx])
+ 
+        # epsilon-frugal  <- could write this better...
+        if costs is not 1:
+            for i in range(len(costs)):
+                if np.random.random() < self.epsf: 
+                    costs[i] = 1 
 
         # Return ranking based on query method
         if self.queryMethod == 'leastCertain':
@@ -57,9 +64,16 @@ class ActiveLearner:
             return a
 
     def chooseTestParameters(self, rank=False):
+        # build list of potential samples 
         potential_samples = np.delete(self.test_idx, self.samples, 0)[rank[:self.n_samples]]
-        self.samples = np.concatenate([self.samples, potential_samples])
 
+        # epsilon-greedy swap between potential samples and available samples
+        for i in range(len(potential_samples)):
+            if np.random.random() < self.epsg: 
+                random_idx = np.random.randint(0, len(self.test_idx))
+                potential_samples[i], self.test_idx[random_idx] = self.test_idx[random_idx], potential_samples[i]
+
+        self.samples = np.concatenate([self.samples, potential_samples])
         return 0
 
     def generateData(self):
@@ -70,14 +84,27 @@ class ActiveLearner:
 
         return train, test
 
-    def fitModel(self, train, test):
+    def learnCosts(self, train, test, costs, test_costs = False):
+        # Fit costs regression model (using Gaussian Process)
+        kernel = gp.kernels.ConstantKernel(1.0, (1e-1, 1e3)) * gp.kernels.RBF(10.0, (1e-3, 1e3))
+        cmodel = gp.GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True)
+        cmodel.fit(train, costs)
+        costs, std = cmodel.predict(test, return_std=True)
+        # if test_costs is not False: print('MSE = {}'.format(((costs-test_costs)**2).mean()))
+        return costs
 
+    def fitModel(self, train, test):
         # Fit model
         self.model.fit(train[0], train[1])
+        # If costs are known, fit cost model:
+        if self.unknownCosts:
+            costs = self.learnCosts(train[0], test[0], self.costs[self.samples], test_costs = self.costs[np.delete(self.test_idx, self.samples, 0)])
+        else:
+            costs = self.costs[np.delete(self.test_idx, self.samples, 0)] if self.costs is not False else 1
         # get evaluation metrics
         pred = self.model.predict(test[0])
         score = 1-hamming_loss(test[1], pred)
-        rank = self.rankData(test, self.costs)
+        rank = self.rankData(test, costs)
 
         return score, pred, rank
 
@@ -89,10 +116,10 @@ class ActiveLearner:
         for n in range(self.iterations):
             self.chooseTestParameters(rank)
             train,test = self.generateData()
-
             # fit & predict using model
             score, pred, rank = self.fitModel(train, test)
 
             print('\rRun {}, Score:{:.4g}'.format(n,score), end =" ")
             scores.append(score)
+
         return scores, self.samples
