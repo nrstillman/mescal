@@ -1,0 +1,54 @@
+<input name="wmxd_chamber">
+  <category name="general"> 
+    <data name="N_cells">1</data>
+    <data name="N_types">1</data>
+    <data name="N_prtcl_types">1</data>
+    <data name="N_CC">1</data>
+    <data name="N_CSC">0</data>
+    <data name="N_VC">20</data>
+    <data name="output_file">testing</data>
+    <data name="NT">1000</data>
+    <data name="t_final">86400</data>
+  </category>
+
+  <category name="opt">
+    <data name="optimise">0</data>
+    <data name="multi_core">0</data>
+    <data name="visualise">0</data>
+    <data name="N_runs">1</data>
+    <data name="scenario">wmxd_chamber</data>
+    <data name="tissue">wmxd</data>
+  </category>
+
+  <cell name="VC"> 
+    <data name="type">VC</data>
+    <data name="N_cell">1</data>
+    <data name="N_prtcl">1</data>
+    <data name="NR">1e5</data>
+    <data name="S">2.9999999999999997e-05</data>
+    <particle name="P0">
+        <data name="D">0.0</data>
+        <data name="k_a">1000000000.0</data>
+        <data name="k_d">1e-4</data>
+        <data name="k_i">1e-5</data>
+        <data name="NP0">100000.0</data>
+        <data name="NP_max">600</data>
+        <data name="T">1</data>
+    </particle>
+  </cell>
+  
+  <cell name="CC">
+    <data name="type">CC</data>
+    <data name="N_cell">1</data>
+    <data name="N_prtcl">1</data>
+    <data name="NR">1e5</data>
+    <data name="S">2.9999999999999997e-05</data>
+    <particle name="P0">
+        <data name="D">0.0</data>
+        <data name="k_a">1000000000.0</data>
+        <data name="k_d">1e-4</data>
+        <data name="k_i">1e-5</data>
+        <data name="NP_max">600</data>
+    </particle>
+  </cell>
+</input>

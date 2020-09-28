@@ -1,0 +1,41 @@
+<input name="single_cell">
+  <category name="general">
+    <data name="N_cells">1</data>
+    <data name="N_types">1</data>
+    <data name="N_prtcl_types">1</data>
+    <data name="N_CC">1</data>
+    <data name="N_CSC">0</data>
+    <data name="N_VC">0</data>
+    <data name="output_file">testing</data>
+    <data name="NT">1000</data>
+    <data name="t_final">172800</data>
+  </category>
+
+  <category name="opt">
+    <data name="optimise">0</data>
+    <data name="multi_core">0</data>
+    <data name="visualise">0</data>
+    <data name="N_runs">1</data>
+    <data name="scenario">single_cell</data>
+    <data name="mesh">10_40_2um</data>
+    <data name="savemesh">1</data>
+    <data name="unif">0.0</data>
+    <data name="tissue">single_cell</data>
+  </category>
+  
+  <cell name="CC">
+    <data name="type">CC</data>
+    <data name="N_cell">0</data>
+    <data name="N_prtcl">1</data>    
+    <data name="NR">1e4</data>
+    <data name="S">10e-6</data>
+    <particle name="P0">
+        <data name="D">1e-12</data>
+        <data name="k_a">1000.0</data>
+        <data name="k_d">1e-4</data>
+        <data name="k_i">1e-5</data>
+        <data name="NP_max">600</data>
+        <data name="NP0">1000.0</data>
+    </particle>
+  </cell>
+</input>
