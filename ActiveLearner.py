@@ -53,11 +53,11 @@ class ActiveLearner:
 
         # Return ranking based on query method
         if self.queryMethod == 'leastCertain':
-            return np.argsort(certainty)
+            return np.argsort(certainty/costs)
         elif self.queryMethod == 'margin':
             return np.argsort(abs(pred_prob[:,0] - pred_prob[:,1])*costs)
         elif self.queryMethod == 'entropy':
-            return np.argsort((pred_prob*np.ma.log(pred_prob).filled(0)).sum(1)/costs)
+            return np.argsort(-(pred_prob*np.ma.log(pred_prob).filled(0)).sum(1)/costs)
         elif self.queryMethod == False:    
             a = np.arange(len(certainty))
             np.random.shuffle(a)
