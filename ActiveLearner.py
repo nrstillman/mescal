@@ -9,9 +9,10 @@ import numpy as np
 
 class ActiveLearner:
 
-    def __init__(self,simulator, parameters, seed, costs = False, queryMethod='leastCertain', unknownCosts = False, epsf = 0, epsg = 0):
+    def __init__(self, parameters, seed, costs = False, queryMethod='leastCertain', 
+            unknownCosts = False, epsf = 0, epsg = 0, test_idx = False, simulator = False):
         
-        self.data = simulator
+        self.simulator = simulator
         self.model = RandomForestClassifier(n_estimators=200, max_features=5)
         self.iterations = parameters[0]
         self.n_samples = parameters[1]
@@ -23,12 +24,12 @@ class ActiveLearner:
         self.epsf = epsf
         self.epsg = epsg
         # Create list of indexes of available test data to keep track of what data has been sampled
-        self.test_idx = np.arange(len(self.data[0]))
+        self.test_idx is test_idx
 
     def intialiseLearner(self):
-        # Sample Data
-        train, test = self.generateData()
-
+        # Sample data
+        train, test = self.evaluateSamples()
+        # Score & rank data
         score, pred, rank = self.fitModel(train, test)
 
         print('\nInitial Score:  {}'.format(score))
@@ -58,7 +59,7 @@ class ActiveLearner:
             return np.argsort(abs(pred_prob[:,0] - pred_prob[:,1])*costs)
         elif self.queryMethod == 'entropy':
             return np.argsort(-(pred_prob*np.ma.log(pred_prob).filled(0)).sum(1)/costs)
-        elif self.queryMethod == False:    
+        else:    
             a = np.arange(len(certainty))
             np.random.shuffle(a)
             return a
@@ -74,13 +75,16 @@ class ActiveLearner:
                 potential_samples[i], self.test_idx[random_idx] = self.test_idx[random_idx], potential_samples[i]
 
         self.samples = np.concatenate([self.samples, potential_samples])
-        return 0
 
-    def generateData(self):
-       # Replace this with simulator function eg self.simulator(self.samples) -> train,test
-        train = [self.data[0][self.samples], self.data[1][self.samples]]
-        # Remove this data from test data
-        test = [np.delete(self.data[0], self.samples, 0), np.delete(self.data[1], self.samples, 0)]
+    def evaluateSamples(self):
+        #simulator that gives target based on features (and costs)
+        train = self.simulator.generateTrainData()
+        test = self.simulator.generateTestData(self.samples)
+
+        # # Take only parameters with simulation data
+        # train = [data[0][self.samples], data[1][self.samples]]
+        # # Remove this data from test data (unassessed parameters...)
+        # test = [np.delete(data[0], self.samples, 0), np.delete(data[1], self.samples, 0)]
 
         return train, test
 
@@ -115,11 +119,11 @@ class ActiveLearner:
         scores.append(score)
         for n in range(self.iterations):
             self.chooseTestParameters(rank)
-            train,test = self.generateData()
+            train,test = self.evaluateSamples()
             # fit & predict using model
             score, pred, rank = self.fitModel(train, test)
+            scores.append(score)
 
             print('\rRun {}, Score:{:.4g}'.format(n,score), end =" ")
-            scores.append(score)
 
         return scores, self.samples

@@ -8,7 +8,7 @@
     <data name="N_VC">0</data>
     <data name="output_file">testing</data>
     <data name="NT">1000</data>
-    <data name="t_final">172800</data>
+    <data name="t_final">3600</data>
   </category>
 
   <category name="opt">
@@ -17,9 +17,9 @@
     <data name="visualise">0</data>
     <data name="N_runs">1</data>
     <data name="scenario">single_cell</data>
-    <data name="mesh">10_40_2um</data>
+    <data name="mesh">10_20_5um</data>
     <data name="savemesh">1</data>
-    <data name="unif">0.0</data>
+    <data name="unif">1.0</data>
     <data name="tissue">single_cell</data>
   </category>
   
