@@ -17,6 +17,18 @@ class STEPS:
         self.trainfilepath = filenames[2]
         self.train_out = filenames[3]
 
+    def loadParameterSpace(self):
+
+        ### dataframe
+        if os.path.exists(self.testfilepath) is False:
+            raise Exception("Load option is selected but no file exists.")
+
+        else:
+            with open(self.testfilepath, "rb") as output_file:
+                df = pickle.load(output_file)
+        print('Total parameter space loaded')
+        return df
+
     def generateTrainData(self):
 
         def initialTrainData():
@@ -60,18 +72,6 @@ class STEPS:
 
     def generateTestData(self, samples):
         #Samples simulation data based on samples and overall bounded parameter space
-
-        def loadTestData():
-            ### dataframe
-            if os.path.exists(self.testfilepath) is False:
-                raise Exception("Load option is selected but no file exists.")
-
-            else:
-                with open(self.testfilepath, "rb") as output_file:
-                    df = pickle.load(output_file)
-            print('data loaded')
-            return df
-
         def saveTestData():
 
                 df = pd.DataFrame(columns = self.feature_labels)
@@ -90,13 +90,13 @@ class STEPS:
                     pickle.dump(df, output_file)
         
         #Load parameter space
-        df = loadTestData()
+        df = self.loadParameterSpace()
 
         #Prepare dataframe for saving results
         df_out = pd.DataFrame(columns=df.columns)
         #Run both scenarios
         df_wmxd = gen.wellMixed(df_out, df.iloc[samples,:])        
-        df_singlecell = gen.singleCell(df_out, df.iloc[samples,:])
+        df_singlecell = gen.singleCell(df_out, df.iloc[samples,:], Nruns=2)
         
         df_test = pd.DataFrame()
         tmp = pd.DataFrame()
@@ -116,4 +116,8 @@ class STEPS:
             pickle.dump(df_singlecell, output_file)
 
         return [df_test[self.feature_labels], df_test['target']]
+
+
+    # def combineData(self, train, test):
+
 
