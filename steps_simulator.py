@@ -6,7 +6,7 @@ import pandas as pd
 
 class STEPS:
 
-    def __init__(self, feature_labels, filenames):
+    def __init__(self, feature_labels, filenames, Nruns = 10):
 
         self.feature_labels = feature_labels
 
@@ -16,6 +16,7 @@ class STEPS:
         self.trainfilepath = filenames[2]
         self.train_out = filenames[3]
         self.data_unloaded = True
+        self.Nruns = Nruns
 
     def loadParameterSpace(self):
 
@@ -106,8 +107,8 @@ class STEPS:
         #Prepare dataframe for saving results
         df_out = pd.DataFrame(columns=df.columns)
         #Run both scenarios
-        df_wmxd = gen.wellMixed(df_out, df.iloc[samples,:])        
-        df_singlecell = gen.singleCell(df_out, df.iloc[samples,:], Nruns=2)
+        df_wmxd = gen.wellMixed(df_out, df.iloc[samples,:], Nruns=self.Nruns)        
+        df_singlecell = gen.singleCell(df_out, df.iloc[samples,:], Nruns=self.Nruns)
         
         df_test = pd.DataFrame()
         tmp = pd.DataFrame()

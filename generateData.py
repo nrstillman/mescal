@@ -15,7 +15,7 @@ import pickle
 
 import run_sim
 
-def wellMixed(df_out, samples, NT =1000, Nruns = 2, output_filename  = 'df_out_wmxd_tmp'):
+def wellMixed(df_out, samples, NT =1000, Nruns = 10, output_filename  = 'df_out_wmxd_tmp'):
     
     def run_iter(stepsParams, N, sim, rctn):
         ssa = []
