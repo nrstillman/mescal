@@ -9,8 +9,8 @@ import numpy as np
 
 class ActiveLearner:
 
-    def __init__(self, parameters, seed, costs = False, queryMethod='leastCertain', 
-            unknownCosts = False, epsf = 0, epsg = 0, test_idx = False, simulator = False):
+    def __init__(self, simulator, parameters, seed, costs = False, queryMethod='leastCertain', 
+            unknownCosts = False, epsf = 0, epsg = 0):
         
         self.simulator = simulator
         self.model = RandomForestClassifier(n_estimators=200, max_features=5)
@@ -28,11 +28,11 @@ class ActiveLearner:
 
     def intialiseLearner(self):
         # Sample data
-        train, test = self.evaluateSamples()
+        train, test = self.evaluateSamples(self.samples)
         # Score & rank data
         score, pred, rank = self.fitModel(train, test)
 
-        print('\nInitial Score:  {}'.format(score))
+        print('\nInitial Score: {}'.format(score))
 
         return score, rank
 
@@ -75,17 +75,20 @@ class ActiveLearner:
                 potential_samples[i], self.self.all_data.index[random_idx] = self.all_data.index[random_idx], potential_samples[i]
 
         self.samples = np.concatenate([self.samples, potential_samples])
+        return potential_samples
 
-    def evaluateSamples(self):
+    def evaluateSamples(self, new_samples):
         #simulator that gives target based on features (and costs)
         train = self.simulator.generateTrainData()
-        test = self.simulator.generateTestData(self.samples)
+        test = self.simulator.generateTestData(new_samples)
         
         # # Take only parameters with simulation data
         # train = [data[0][self.samples], data[1][self.samples]]
         # # Remove this data from test data (unassessed parameters...)
         # test = [np.delete(data[0], self.samples, 0), np.delete(data[1], self.samples, 0)]
-        self.all_data = all_data.drop(self.samples)
+        pre_sampled = []
+        [pre_sampled.append(s) for s in self.samples if s in list(self.all_data.index)]
+        self.all_data = self.all_data.drop(pre_sampled)
 
         return train, test
 
@@ -103,7 +106,7 @@ class ActiveLearner:
         self.model.fit(train[0], train[1])
         # If costs are known, fit cost model:
         if self.unknownCosts:
-            costs = self.learnCosts(train[0], self.all_data, train[2], test_costs = False)#self.costs[np.delete(self.test_idx, self.samples, 0)])
+            costs = self.learnCosts(train[0], train[2])#self.costs[np.delete(self.test_idx, self.samples, 0)])
         else:
             costs = test[2] if self.costs is not False else 1
         # get evaluation metrics
@@ -119,8 +122,8 @@ class ActiveLearner:
         score, rank = self.intialiseLearner()
         scores.append(score)
         for n in range(self.iterations):
-            self.chooseTestParameters(rank)
-            train, test = self.evaluateSamples()
+            new_queries = self.chooseTestParameters(rank)
+            train, test = self.evaluateSamples(new_queries)
             # fit & predict using model
             score, pred, rank = self.fitModel(train, test)
             scores.append(score)
@@ -129,4 +132,5 @@ class ActiveLearner:
                 print('\rRun {}, Score:{:.4g}'.format(n,score), end =" ") 
 
             self.simulator.combineData(n)
+            print('Samples chosen are: {}'.format(self.samples))
         return scores, self.samples

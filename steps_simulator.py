@@ -6,9 +6,8 @@ import pandas as pd
 
 class STEPS:
 
-    def __init__(self, features, feature_labels, filenames):
+    def __init__(self, feature_labels, filenames):
 
-        self.feature = features
         self.feature_labels = feature_labels
 
         self.testfilepath = filenames[0]
@@ -53,20 +52,21 @@ class STEPS:
                 os.system('cp {} {}'.format(self.trainfilepath, backupname))  
 
                 with open(self.trainfilepath, "rb") as output_file:
-                    df_raw = pickle.load(output_file)
+                    df_train = pickle.load(output_file)
 
             else:
                 raise Exception("Training data is either under a different name or not intialised.")
 
-            df_raw["Lcell"] = df_raw["Lcell"].astype(str).astype(int)
-            df_raw["Ldomain"] = df_raw["Ldomain"].astype(str).astype(int)
+            # df_raw["Lcell"] = df_raw["Lcell"].astype(str).astype(int)
+            # df_raw["Ldomain"] = df_raw["Ldomain"].astype(str).astype(int)
 
-            df_train = pd.DataFrame()
-            for i in range(len(df_raw['index'].unique())):
-                df_train[i] = df_raw[df_raw['index'] == df_raw['index'].unique()[i]].mean()
+            # df_train = pd.DataFrame()
+            # for i in range(len(df_raw['index'].unique())):
+            #     df_train[i] = df_raw[df_raw['index'] == df_raw['index'].unique()[i]].mean()
 
             self.data_unloaded = False
-            return df_train.transpose()
+            return df_train
+            # return df_train.transpose()
         
         if self.data_unloaded:
             df_train = loadTrainData()
@@ -121,7 +121,6 @@ class STEPS:
         
         npi_diff = df_test.NPi/tmp.NPi
         df_test['target'] = 1*(npi_diff > 0.2)
-        df_test.drop(columns=['Run', 'prediction', 'runtime'], inplace=True)
 
         with open(self.test_out, "wb") as output_file:
             pickle.dump(df_test, output_file)
@@ -150,7 +149,7 @@ class STEPS:
                 df_train = pickle.load(output_file)             
 
         with open(self.train_out, "wb") as output_file:
-            pickle.dump(pd.concat([df_train, df_test]), ignore_index=True)
+            pickle.dump(pd.concat([df_train, df_test], ignore_index=True), output_file)
 
         return 0 
 
