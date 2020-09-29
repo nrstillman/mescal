@@ -16,6 +16,7 @@ class STEPS:
 
         self.trainfilepath = filenames[2]
         self.train_out = filenames[3]
+        self.data_unloaded = True
 
     def loadParameterSpace(self):
 
@@ -64,10 +65,20 @@ class STEPS:
             for i in range(len(df_raw['index'].unique())):
                 df_train[i] = df_raw[df_raw['index'] == df_raw['index'].unique()[i]].mean()
 
+            self.data_unloaded = False
             return df_train.transpose()
         
-        df_train = loadTrainData()
-        return [df_train[self.feature_labels], df_train['target']]
+        if self.data_unloaded:
+            df_train = loadTrainData()
+            df_train.drop(columns='Run', inplace=True)
+
+            with open(self.train_out, "wb") as output_file:
+                pickle.dump(df_train, output_file)
+        else:
+            with open(self.train_out, "rb") as output_file:
+                df_train = pickle.load(output_file)             
+
+        return [df_train[self.feature_labels], df_train['target'], df_train['cost']]
 
 
     def generateTestData(self, samples):
@@ -110,14 +121,37 @@ class STEPS:
         
         npi_diff = df_test.NPi/tmp.NPi
         df_test['target'] = 1*(npi_diff > 0.2)
-        df_test.drop(columns='Run', inplace=True)
+        df_test.drop(columns=['Run', 'prediction', 'runtime'], inplace=True)
 
         with open(self.test_out, "wb") as output_file:
-            pickle.dump(df_singlecell, output_file)
+            pickle.dump(df_test, output_file)
 
-        return [df_test[self.feature_labels], df_test['target']]
+        return [df_test[self.feature_labels], df_test['target'], df_test['cost']]
 
+    def combineData(self, i):
+        if os.path.exists(self.test_out):
+            # Create backup
+            backupname = self.test_out+str(i)+'.bak'
+            if os.path.exists(backupname):
+                os.remove(backupname)
+            os.system('cp {} {}'.format(self.test_out, backupname))  
 
-    # def combineData(self, train, test):
+            with open(self.test_out, "rb") as output_file:
+                df_test = pickle.load(output_file)      
+
+        if os.path.exists(self.train_out):
+            # Create backup
+            backupname = self.train_out+str(i)+'.bak'
+            if os.path.exists(backupname):
+                os.remove(backupname)
+            os.system('cp {} {}'.format(self.train_out, backupname))  
+
+            with open(self.train_out, "rb") as output_file:
+                df_train = pickle.load(output_file)             
+
+        with open(self.train_out, "wb") as output_file:
+            pickle.dump(pd.concat([df_train, df_test]), ignore_index=True)
+
+        return 0 
 
 

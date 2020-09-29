@@ -128,5 +128,5 @@ class ActiveLearner:
             if score != -1:
                 print('\rRun {}, Score:{:.4g}'.format(n,score), end =" ") 
 
-            self.simulator.combineData(train,test)
+            self.simulator.combineData(n)
         return scores, self.samples
